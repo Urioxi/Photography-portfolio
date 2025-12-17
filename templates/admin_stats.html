@@ -1,14 +1,15 @@
 {% extends "base.html" %}
 
+{% block title %}Statistiques Admin - Portfolio Photos{% endblock %}
+
 {% block content %}
 <div class="max-w-6xl mx-auto">
-    <!-- Hero Section -->
-    <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">Portfolio Photographique</h1>
-        <p class="text-gray-600 text-lg">Découvrez ma collection de photographies</p>
+    <div class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">📊 Statistiques</h1>
+        <p class="text-gray-600">Vue d'ensemble de votre portfolio</p>
     </div>
 
-    <!-- Upload Section (visible par tout le monde) -->
+    <!-- Upload Section -->
     <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-8">
         <h2 class="text-2xl font-semibold mb-6 text-gray-800">Ajouter une photo</h2>
         <div class="space-y-4">
@@ -35,11 +36,68 @@
         </div>
     </div>
 
-    <!-- Gallery Preview -->
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm mb-1">Total de photos</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ stats.total_photos }}</p>
+                </div>
+                <div class="text-4xl">📸</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm mb-1">Catégories</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ stats.categories }}</p>
+                </div>
+                <div class="text-4xl">🏷️</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm mb-1">Photos aujourd'hui</p>
+                    <p class="text-3xl font-bold text-gray-800">-</p>
+                </div>
+                <div class="text-4xl">📅</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photos par catégorie -->
+    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-8">
+        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Photos par catégorie</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for category, count in stats.photos_by_category.items() %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                <div class="flex justify-between items-center">
+                    <span class="font-semibold text-gray-800">{{ category }}</span>
+                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">{{ count }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Liste des photos récentes -->
     <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
-        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Dernières photos</h2>
-        <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            <div class="col-span-full text-center text-gray-500">Chargement...</div>
+        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Photos récentes</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {% for photo in gallery[-12:] %}
+            <div class="relative group overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
+                <img src="{{ photo.url }}" alt="Photo" class="w-full h-48 object-cover">
+                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                    <span class="text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm bg-blue-600 px-3 py-1 rounded-full">
+                        {{ photo.category or 'Non catégorisé' }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
@@ -47,47 +105,6 @@
 
 {% block scripts %}
 <script>
-async function loadGallery() {
-    const galleryDiv = document.getElementById('gallery');
-    galleryDiv.innerHTML = '<div class="col-span-full text-center text-gray-500">Chargement...</div>';
-
-    try {
-        const response = await fetch('/gallery?limit=8');
-        const gallery = await response.json();
-        
-        galleryDiv.innerHTML = '';
-        if (!gallery.length) {
-            galleryDiv.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">Aucune photo pour le moment.</div>';
-            return;
-        }
-
-        gallery.slice(0, 8).forEach(photo => {
-            const div = document.createElement('div');
-            div.className = 'relative group overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1';
-            
-            const img = document.createElement('img');
-            img.src = photo.url;
-            img.className = 'w-full h-64 object-cover';
-            img.alt = 'Photo portfolio';
-            img.loading = 'lazy';
-            
-            const overlay = document.createElement('div');
-            overlay.className = 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center';
-            
-            const category = document.createElement('span');
-            category.className = 'text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-sm font-semibold bg-blue-600 px-3 py-1 rounded-full';
-            category.textContent = photo.category || 'Non catégorisé';
-            
-            overlay.appendChild(category);
-            div.appendChild(img);
-            div.appendChild(overlay);
-            galleryDiv.appendChild(div);
-        });
-    } catch (error) {
-        galleryDiv.innerHTML = '<div class="col-span-full text-center text-red-600 py-8">Impossible de charger la galerie.</div>';
-    }
-}
-
 async function uploadImage() {
     const fileInput = document.getElementById('imageInput');
     const categoryInput = document.getElementById('categoryInput');
@@ -156,7 +173,10 @@ async function uploadImage() {
             status.className = 'text-sm text-green-600 mt-2';
             fileInput.value = '';
             categoryInput.value = 'Non catégorisé';
-            loadGallery();
+            // Recharger la page pour mettre à jour les stats
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         } else {
             status.textContent = '❌ Erreur: ' + addResult.error;
             status.className = 'text-sm text-red-600 mt-2';
@@ -169,8 +189,6 @@ async function uploadImage() {
         btn.disabled = false;
     }
 }
-
-// Chargement initial
-loadGallery();
 </script>
 {% endblock %}
+

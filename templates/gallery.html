@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Galerie - Portfolio Photos{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="mb-8 text-center">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">🖼️ Galerie</h1>
+        <p class="text-gray-600">Explorez toutes les photographies</p>
+    </div>
+
+    <!-- Filtre par catégorie -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <label class="block text-sm font-medium text-gray-700 mb-3">Filtrer par catégorie</label>
+        <select id="categoryFilter" class="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="">Toutes les catégories</option>
+        </select>
+    </div>
+
+    <!-- Galerie -->
+    <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div class="col-span-full text-center text-gray-500 py-8">Chargement...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allPhotos = [];
+
+async function loadCategories() {
+    try {
+        const response = await fetch('/categories');
+        const categories = await response.json();
+        const select = document.getElementById('categoryFilter');
+        
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Erreur chargement catégories:', error);
+    }
+}
+
+async function loadGallery(category = '') {
+    const galleryDiv = document.getElementById('gallery');
+    galleryDiv.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">Chargement...</div>';
+
+    try {
+        const url = category ? `/gallery?category=${encodeURIComponent(category)}` : '/gallery';
+        const response = await fetch(url);
+        const gallery = await response.json();
+        
+        allPhotos = gallery;
+        displayGallery(gallery);
+    } catch (error) {
+        galleryDiv.innerHTML = '<div class="col-span-full text-center text-red-600 py-8">Impossible de charger la galerie.</div>';
+    }
+}
+
+function displayGallery(gallery) {
+    const galleryDiv = document.getElementById('gallery');
+    galleryDiv.innerHTML = '';
+    
+    if (!gallery.length) {
+        galleryDiv.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">Aucune photo dans cette catégorie.</div>';
+        return;
+    }
+
+    gallery.forEach(photo => {
+        const div = document.createElement('div');
+        div.className = 'relative group overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1';
+        
+        const img = document.createElement('img');
+        img.src = photo.url;
+        img.className = 'w-full h-64 object-cover';
+        img.alt = 'Photo portfolio';
+        img.loading = 'lazy';
+        
+        const overlay = document.createElement('div');
+        overlay.className = 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center';
+        
+        const category = document.createElement('span');
+        category.className = 'text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-sm font-semibold bg-blue-600 px-3 py-1 rounded-full';
+        category.textContent = photo.category || 'Non catégorisé';
+        
+        overlay.appendChild(category);
+        div.appendChild(img);
+        div.appendChild(overlay);
+        galleryDiv.appendChild(div);
+    });
+}
+
+// Event listener pour le filtre
+document.getElementById('categoryFilter').addEventListener('change', (e) => {
+    loadGallery(e.target.value);
+});
+
+// Chargement initial
+loadCategories();
+loadGallery();
+</script>
+{% endblock %}
+

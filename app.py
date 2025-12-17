@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_cors import CORS
+from functools import wraps
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -13,11 +14,16 @@ import requests
 from io import BytesIO
 import hashlib
 import time
+from datetime import datetime
 
 load_dotenv()
 
 app = Flask(__name__, static_folder='statics', template_folder='templates')
+app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 CORS(app)
+
+# Mot de passe admin
+ADMIN_PASSWORD = 'admin123'
 
 # Config Cloudinary
 cloudinary.config(
@@ -37,8 +43,21 @@ def load_gallery():
             data = json.load(f)
             # Compat: accepter soit une liste simple, soit un dict {photos: []}
             if isinstance(data, list):
-                return data
-            return data.get('photos', [])
+                photos = data
+            else:
+                photos = data.get('photos', [])
+            
+            # Migration : ajouter une catégorie par défaut aux photos qui n'en ont pas
+            updated = False
+            for photo in photos:
+                if 'category' not in photo:
+                    photo['category'] = 'Non catégorisé'
+                    updated = True
+            
+            if updated:
+                save_gallery(photos)
+            
+            return photos
     except FileNotFoundError:
         # Fichier n'existe pas encore, retourner liste vide
         return []
@@ -56,9 +75,68 @@ def save_gallery(gallery):
         print(f"Erreur lors de la sauvegarde de la galerie: {e}")
         raise
 
+def get_categories():
+    """Récupère toutes les catégories uniques depuis la galerie."""
+    gallery = load_gallery()
+    categories = set()
+    for photo in gallery:
+        if photo.get('category'):
+            categories.add(photo['category'])
+    return sorted(list(categories))
+
+def login_required(f):
+    """Décorateur pour protéger les routes admin."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/gallery-page')
+def gallery_page():
+    """Page galerie publique avec filtrage par catégorie."""
+    return render_template('gallery.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Page de connexion admin."""
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        if password == ADMIN_PASSWORD:
+            session['logged_in'] = True
+            return redirect(url_for('admin_stats'))
+        else:
+            return render_template('login.html', error='Mot de passe incorrect')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    """Déconnexion admin."""
+    session.pop('logged_in', None)
+    return redirect(url_for('index'))
+
+@app.route('/admin/stats')
+@login_required
+def admin_stats():
+    """Page de statistiques admin."""
+    gallery = load_gallery()
+    categories = get_categories()
+    
+    stats = {
+        'total_photos': len(gallery),
+        'categories': len(categories),
+        'photos_by_category': {}
+    }
+    
+    for category in categories:
+        stats['photos_by_category'][category] = len([p for p in gallery if p.get('category') == category])
+    
+    return render_template('admin_stats.html', stats=stats, categories=categories, gallery=gallery)
 
 @app.route('/get-signature', methods=['GET'])
 def get_signature():
@@ -103,6 +181,7 @@ def add_photo():
         data = request.json
         public_id = data.get('public_id')
         uploaded_at = data.get('created_at', '')
+        category = data.get('category', 'Non catégorisé')
         
         if not public_id:
             return jsonify({'error': 'public_id manquant'}), 400
@@ -113,7 +192,8 @@ def add_photo():
             'id': str(uuid.uuid4()),
             'public_id': public_id,
             'url': cloudinary.CloudinaryImage(public_id).build_url(secure=True),
-            'uploaded_at': uploaded_at
+            'uploaded_at': uploaded_at,
+            'category': category
         }
         gallery.append(new_photo)
         save_gallery(gallery)
@@ -127,8 +207,20 @@ def add_photo():
 
 @app.route('/gallery')
 def get_gallery():
+    """API pour récupérer la galerie, avec filtrage optionnel par catégorie."""
+    category = request.args.get('category', None)
     gallery = load_gallery()
+    
+    if category:
+        gallery = [p for p in gallery if p.get('category') == category]
+    
     return jsonify(gallery)
+
+@app.route('/categories')
+def get_categories_api():
+    """API pour récupérer toutes les catégories."""
+    categories = get_categories()
+    return jsonify(categories)
 
 @app.route('/rebuild-gallery', methods=['POST'])
 def rebuild_gallery():
