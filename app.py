@@ -4,10 +4,13 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 from cloudinary.exceptions import NotFound
+import cloudinary.utils
 import json
 import os
 from dotenv import load_dotenv
 import uuid
+import requests
+from io import BytesIO
 
 load_dotenv()
 
@@ -28,9 +31,19 @@ GALLERY_JSON_ID = 'portfolio/gallery_data'
 def load_gallery():
     """Charge la liste des photos stockées dans le JSON sur Cloudinary."""
     try:
-        # Télécharger le JSON depuis Cloudinary
-        result = cloudinary.api.resource(GALLERY_JSON_ID, resource_type='raw')
-        json_data = json.loads(result['content'])
+        # Obtenir l'URL du fichier JSON sur Cloudinary
+        json_url = cloudinary.utils.cloudinary_url(
+            GALLERY_JSON_ID,
+            resource_type='raw',
+            format='json'
+        )[0]
+        
+        # Télécharger le contenu depuis l'URL
+        response = requests.get(json_url, timeout=10)
+        response.raise_for_status()
+        
+        # Parser le JSON
+        json_data = response.json()
         
         # Compat: accepter soit une liste simple, soit un dict {photos: []}
         if isinstance(json_data, list):
@@ -38,6 +51,9 @@ def load_gallery():
         return json_data.get('photos', [])
     except NotFound:
         # Fichier n'existe pas encore, retourner liste vide
+        return []
+    except requests.exceptions.RequestException:
+        # Erreur de téléchargement, retourner liste vide
         return []
     except Exception as e:
         print(f"Erreur lors du chargement de la galerie: {e}")
@@ -50,13 +66,15 @@ def save_gallery(gallery):
         # Convertir en JSON string
         json_str = json.dumps({'photos': gallery}, indent=2)
         
+        # Créer un objet BytesIO pour l'upload
+        json_bytes = BytesIO(json_str.encode('utf-8'))
+        
         # Upload/Update le fichier JSON sur Cloudinary
         cloudinary.uploader.upload(
-            json_str.encode('utf-8'),
+            json_bytes,
             public_id=GALLERY_JSON_ID,
             resource_type='raw',
-            overwrite=True,
-            format='json'
+            overwrite=True
         )
     except Exception as e:
         print(f"Erreur lors de la sauvegarde de la galerie: {e}")
@@ -109,6 +127,39 @@ def upload_image():
 def get_gallery():
     gallery = load_gallery()
     return jsonify(gallery)
+
+@app.route('/rebuild-gallery', methods=['POST'])
+def rebuild_gallery():
+    """Reconstruit la galerie depuis toutes les images dans le dossier portfolio/ sur Cloudinary."""
+    try:
+        # Récupérer toutes les images du dossier portfolio/
+        result = cloudinary.api.resources(
+            type='upload',
+            prefix='portfolio/',
+            resource_type='image',
+            max_results=500
+        )
+        
+        gallery = []
+        for resource in result.get('resources', []):
+            photo = {
+                'id': str(uuid.uuid4()),
+                'public_id': resource['public_id'],
+                'url': cloudinary.CloudinaryImage(resource['public_id']).build_url(secure=True),
+                'uploaded_at': resource.get('created_at', '')
+            }
+            gallery.append(photo)
+        
+        # Sauvegarder la galerie reconstruite
+        save_gallery(gallery)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Galerie reconstruite avec {len(gallery)} photos',
+            'count': len(gallery)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
