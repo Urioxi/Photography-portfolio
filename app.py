@@ -26,36 +26,21 @@ cloudinary.config(
     api_secret=os.getenv('CLOUDINARY_API_SECRET')
 )
 
-# Public ID du fichier JSON sur Cloudinary
-GALLERY_JSON_ID = 'portfolio/gallery_data'
+# Fichier JSON local (sur PythonAnywhere, on stocke localement car les connexions HTTPS sortantes sont bloquées)
+GALLERY_FILE = 'data.json'
 
 
 def load_gallery():
-    """Charge la liste des photos stockées dans le JSON sur Cloudinary."""
+    """Charge la liste des photos stockées dans le JSON local."""
     try:
-        # Obtenir l'URL du fichier JSON sur Cloudinary
-        json_url = cloudinary.utils.cloudinary_url(
-            GALLERY_JSON_ID,
-            resource_type='raw',
-            format='json'
-        )[0]
-        
-        # Télécharger le contenu depuis l'URL
-        response = requests.get(json_url, timeout=10)
-        response.raise_for_status()
-        
-        # Parser le JSON
-        json_data = response.json()
-        
-        # Compat: accepter soit une liste simple, soit un dict {photos: []}
-        if isinstance(json_data, list):
-            return json_data
-        return json_data.get('photos', [])
-    except NotFound:
+        with open(GALLERY_FILE, 'r') as f:
+            data = json.load(f)
+            # Compat: accepter soit une liste simple, soit un dict {photos: []}
+            if isinstance(data, list):
+                return data
+            return data.get('photos', [])
+    except FileNotFoundError:
         # Fichier n'existe pas encore, retourner liste vide
-        return []
-    except requests.exceptions.RequestException:
-        # Erreur de téléchargement, retourner liste vide
         return []
     except Exception as e:
         print(f"Erreur lors du chargement de la galerie: {e}")
@@ -63,21 +48,10 @@ def load_gallery():
 
 
 def save_gallery(gallery):
-    """Sauvegarde la liste des photos dans le JSON sur Cloudinary."""
+    """Sauvegarde la liste des photos dans le JSON local."""
     try:
-        # Convertir en JSON string
-        json_str = json.dumps({'photos': gallery}, indent=2)
-        
-        # Créer un objet BytesIO pour l'upload
-        json_bytes = BytesIO(json_str.encode('utf-8'))
-        
-        # Upload/Update le fichier JSON sur Cloudinary
-        cloudinary.uploader.upload(
-            json_bytes,
-            public_id=GALLERY_JSON_ID,
-            resource_type='raw',
-            overwrite=True
-        )
+        with open(GALLERY_FILE, 'w') as f:
+            json.dump({'photos': gallery}, f, indent=2)
     except Exception as e:
         print(f"Erreur lors de la sauvegarde de la galerie: {e}")
         raise
