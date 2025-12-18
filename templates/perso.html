@@ -3,7 +3,46 @@
 {% block title %}À propos{% endblock %}
 
 {% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold text-gray-800 mb-8 text-center">À propos de moi</h1>
 
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Qui suis-je ?</h2>
+            <p class="text-gray-600 mb-4">
+                Passionné par la photographie depuis plus de 10 ans, je capture des moments uniques et des émotions authentiques à travers mon objectif.
+            </p>
+            <p class="text-gray-600">
+                Mon travail se concentre sur les portraits, les paysages urbains et les instants de vie quotidiens, toujours à la recherche de la lumière parfaite et de l'expression sincère.
+            </p>
+        </div>
 
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Mon approche</h2>
+            <p class="text-gray-600 mb-4">
+                Je crois que chaque photo raconte une histoire. Mon objectif est de créer des images qui non seulement capturent un moment, mais qui transmettent aussi une émotion et une connexion authentique.
+            </p>
+            <p class="text-gray-600">
+                Chaque projet est unique et adapté aux besoins spécifiques de mes clients, que ce soit pour des événements personnels ou professionnels.
+            </p>
+        </div>
+    </div>
 
+    <div class="bg-white rounded-lg shadow-md p-8 text-center">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Intéressé par une collaboration ?</h2>
+        <p class="text-gray-600 mb-6">
+            N'hésitez pas à me contacter via la messagerie du site pour discuter de vos projets photographiques.
+        </p>
+        <a href="{{ url_for('messages') }}"
+           class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200">
+            💬 Me contacter
+        </a>
+    </div>
+
+    <div class="mt-12 text-center">
+        <p class="text-gray-500">
+            📸 Portfolio créé avec passion • © 2025 Tous droits réservés
+        </p>
+    </div>
+</div>
 {% endblock %}
