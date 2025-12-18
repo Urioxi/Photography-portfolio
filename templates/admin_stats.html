@@ -61,10 +61,10 @@
         <div class="bg-white rounded-xl shadow-lg p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-600 text-sm mb-1">Photos aujourd'hui</p>
-                    <p class="text-3xl font-bold text-gray-800">-</p>
+                    <p class="text-gray-600 text-sm mb-1">Visites uniques</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ stats.unique_visits }}</p>
                 </div>
-                <div class="text-4xl">📅</div>
+                <div class="text-4xl">👥</div>
             </div>
         </div>
     </div>
@@ -84,17 +84,69 @@
         </div>
     </div>
 
-    <!-- Liste des photos récentes -->
+    <!-- Créer une catégorie -->
+    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-8">
+        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Créer une catégorie</h2>
+        <div class="flex gap-4">
+            <input type="text" id="newCategoryInput" placeholder="Nom de la catégorie" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <button onclick="createCategory()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+                ➕ Créer
+            </button>
+        </div>
+        <p id="categoryStatus" class="text-sm text-gray-600 mt-2"></p>
+    </div>
+
+    <!-- Liste des photos avec gestion -->
     <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
-        <h2 class="text-2xl font-semibold mb-6 text-gray-800">Photos récentes</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {% for photo in gallery[-12:] %}
-            <div class="relative group overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
-                <img src="{{ photo.url }}" alt="Photo" class="w-full h-48 object-cover">
-                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                    <span class="text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm bg-blue-600 px-3 py-1 rounded-full">
-                        {{ photo.category or 'Non catégorisé' }}
-                    </span>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <h2 class="text-2xl font-semibold text-gray-800">Gestion des photos</h2>
+            <div class="w-full md:w-64">
+                <label class="block text-sm font-medium text-gray-700 mb-2">🔍 Rechercher par titre</label>
+                <input type="text" id="searchPhotosInput" placeholder="Tapez le titre..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+        </div>
+        <div id="photosList" class="space-y-4">
+            {% for photo in gallery %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition photo-item" data-photo-id="{{ photo.id }}" data-photo-title="{{ (photo.title or '')|lower }}">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="md:w-48 flex-shrink-0">
+                        <img src="{{ photo.url }}" alt="Photo" class="w-full h-32 object-cover rounded-lg">
+                    </div>
+                    <div class="flex-1">
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Titre</label>
+                            <input type="text" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" 
+                                   value="{{ photo.title or '' }}"
+                                   data-photo-id="{{ photo.id }}"
+                                   id="title-{{ photo.id }}"
+                                   placeholder="Titre de la photo">
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Catégories (séparées par virgule)</label>
+                            <input type="text" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" 
+                                   value="{% if photo.categories %}{{ photo.categories|join(', ') }}{% elif photo.category %}{{ photo.category }}{% else %}Non catégorisé{% endif %}"
+                                   data-photo-id="{{ photo.id }}"
+                                   id="categories-{{ photo.id }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" 
+                                rows="3"
+                                data-photo-id="{{ photo.id }}"
+                                id="description-{{ photo.id }}">{{ photo.description or '' }}</textarea>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="updatePhoto('{{ photo.id }}')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition">
+                                💾 Sauvegarder
+                            </button>
+                            <button onclick="deletePhoto('{{ photo.id }}')" class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition">
+                                🗑️ Supprimer
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
             {% endfor %}
@@ -105,6 +157,135 @@
 
 {% block scripts %}
 <script>
+async function createCategory() {
+    const input = document.getElementById('newCategoryInput');
+    const status = document.getElementById('categoryStatus');
+    const name = input.value.trim();
+    
+    if (!name) {
+        status.textContent = '⚠️ Entrez un nom de catégorie';
+        status.className = 'text-sm text-red-600 mt-2';
+        return;
+    }
+    
+    try {
+        const response = await fetch('/create-category', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name: name})
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            status.textContent = '✅ Catégorie créée ! Vous pouvez maintenant l\'utiliser.';
+            status.className = 'text-sm text-green-600 mt-2';
+            input.value = '';
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            status.textContent = '❌ Erreur: ' + result.error;
+            status.className = 'text-sm text-red-600 mt-2';
+        }
+    } catch (error) {
+        status.textContent = '❌ Erreur: ' + error.message;
+        status.className = 'text-sm text-red-600 mt-2';
+    }
+}
+
+async function updatePhoto(photoId) {
+    const titleInput = document.getElementById(`title-${photoId}`);
+    const categoriesInput = document.getElementById(`categories-${photoId}`);
+    const descriptionInput = document.getElementById(`description-${photoId}`);
+    
+    const categories = categoriesInput.value.split(',').map(c => c.trim()).filter(c => c);
+    
+    try {
+        const response = await fetch(`/update-photo/${photoId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                title: titleInput.value,
+                categories: categories,
+                description: descriptionInput.value
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            alert('✅ Photo mise à jour avec succès !');
+            window.location.reload();
+        } else {
+            alert('❌ Erreur: ' + result.error);
+        }
+    } catch (error) {
+        alert('❌ Erreur: ' + error.message);
+    }
+}
+
+async function deletePhoto(photoId) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette photo ?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/delete-photo/${photoId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            alert('✅ Photo supprimée !');
+            window.location.reload();
+        } else {
+            alert('❌ Erreur: ' + result.error);
+        }
+    } catch (error) {
+        alert('❌ Erreur: ' + error.message);
+    }
+}
+
+// Fonction de recherche dans la liste des photos
+function searchPhotos() {
+    const searchInput = document.getElementById('searchPhotosInput');
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const photoItems = document.querySelectorAll('.photo-item');
+    
+    photoItems.forEach(item => {
+        const title = item.getAttribute('data-photo-title') || '';
+        if (title.includes(searchTerm)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Afficher un message si aucun résultat
+    const visibleItems = Array.from(photoItems).filter(item => item.style.display !== 'none');
+    const photosList = document.getElementById('photosList');
+    let noResultsMsg = document.getElementById('noResultsMsg');
+    
+    if (visibleItems.length === 0 && searchTerm) {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.id = 'noResultsMsg';
+            noResultsMsg.className = 'text-center text-gray-500 py-8 col-span-full';
+            noResultsMsg.textContent = 'Aucune photo trouvée avec ce titre.';
+            photosList.appendChild(noResultsMsg);
+        }
+    } else {
+        if (noResultsMsg) {
+            noResultsMsg.remove();
+        }
+    }
+}
+
+// Event listener pour la recherche dans admin
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchPhotosInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', searchPhotos);
+    }
+});
+
 async function uploadImage() {
     const fileInput = document.getElementById('imageInput');
     const categoryInput = document.getElementById('categoryInput');
@@ -162,7 +343,7 @@ async function uploadImage() {
             body: JSON.stringify({
                 public_id: uploadResult.public_id,
                 created_at: uploadResult.created_at,
-                category: categoryInput.value
+                category: categoryInput.value  // Le backend convertira en categories
             })
         });
         

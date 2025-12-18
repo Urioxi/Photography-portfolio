@@ -4,7 +4,25 @@
       "id": "c6b9bc59-6e28-425b-b9bd-55f94c074afc",
       "public_id": "portfolio/dhqpn3vq3u8y7qxuitlu",
       "url": "https://res.cloudinary.com/dqmaabjuf/image/upload/v1/portfolio/dhqpn3vq3u8y7qxuitlu",
-      "uploaded_at": "2025-12-16T16:27:22Z"
+      "uploaded_at": "2025-12-16T16:27:22Z",
+      "category": "Non cat\u00e9goris\u00e9",
+      "categories": [
+        "Voyage",
+        "Bateau"
+      ],
+      "description": "Une super photo du bateau fran\u00e7ais pour la coupe de l'America",
+      "title": "Bateau"
+    },
+    {
+      "id": "6d353580-7673-4f28-8416-4c29cd69023a",
+      "public_id": "portfolio/ayrumwwzu5c9yewtlclj",
+      "url": "https://res.cloudinary.com/dqmaabjuf/image/upload/v1/portfolio/ayrumwwzu5c9yewtlclj",
+      "uploaded_at": "2025-12-18T09:31:09Z",
+      "categories": [
+        "Architecture"
+      ],
+      "description": "",
+      "title": "Art\u00e9mis"
     }
   ]
 }
