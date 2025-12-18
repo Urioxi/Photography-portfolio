@@ -309,3 +309,5 @@ function createPhotoCard(photo) {
 4. **Gestion d'erreurs** : vérifier si l'image existe avant de l'afficher
 5. **Performance** : limiter le nombre d'images affichées simultanément
 
+
+
