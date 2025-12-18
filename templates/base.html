@@ -144,11 +144,13 @@
             if (userMenuBtn && userMenu) {
                 userMenuBtn.addEventListener('click', function(event) {
                     event.stopPropagation();
+                    // Fermer d'abord tous les menus
+                    if (mobileMenu) mobileMenu.classList.add('hidden');
+
+                    // Basculer le menu utilisateur
                     const isHidden = userMenu.classList.contains('hidden');
                     if (isHidden) {
                         userMenu.classList.remove('hidden');
-                        // Fermer le menu mobile si ouvert
-                        if (mobileMenu) mobileMenu.classList.add('hidden');
                     } else {
                         userMenu.classList.add('hidden');
                     }
@@ -158,6 +160,10 @@
             if (mobileMenuBtn && mobileMenu) {
                 mobileMenuBtn.addEventListener('click', function(event) {
                     event.stopPropagation(); // Empêcher la propagation de l'événement
+                    // Fermer d'abord le menu utilisateur
+                    if (userMenu) userMenu.classList.add('hidden');
+
+                    // Basculer le menu mobile
                     const isHidden = mobileMenu.classList.contains('hidden');
                     if (isHidden) {
                         mobileMenu.classList.remove('hidden');
