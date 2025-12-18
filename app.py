@@ -267,7 +267,9 @@ def urioxi_required(f):
         if not session.get('logged_in'):
             return redirect(url_for('login'))
         if session.get('username') != 'Urioxi':
-            return redirect(url_for('index'))  # Redirection silencieuse
+            # Retourner une erreur 404 - la page n'existe pas pour les non-admin
+            from flask import abort
+            abort(404)
         return f(*args, **kwargs)
     return decorated_function
 

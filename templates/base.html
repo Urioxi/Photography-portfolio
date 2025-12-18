@@ -35,6 +35,9 @@
                                 <span id="unreadBadge" class="hidden ml-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full"></span>
                             </a>
                         </div>
+                        {% if session.username == 'Urioxi' %}
+                        <a href="{{ url_for('admin_stats') }}" class="text-purple-600 hover:text-purple-800 transition">Administration</a>
+                        {% endif %}
                         <span class="text-gray-600">{{ session.username }}</span>
                         <a href="{{ url_for('user_logout') }}" class="text-red-600 hover:text-red-800 transition">Déconnexion</a>
                     </div>
@@ -45,11 +48,6 @@
                     </div>
                     {% endif %}
 
-                    <!-- Admin (si connecté en tant qu'admin) -->
-                    {% if 'logged_in' in session %}
-                    <a href="{{ url_for('admin_stats') }}" class="text-purple-600 hover:text-purple-800 transition ml-4">Admin</a>
-                    <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-800 transition">Déconnexion Admin</a>
-                    {% endif %}
                 </div>
 
                 <!-- Menu mobile - Bouton hamburger -->
@@ -76,6 +74,9 @@
                             Messagerie
                             <span id="mobileUnreadBadge" class="hidden ml-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full"></span>
                         </a>
+                        {% if session.username == 'Urioxi' %}
+                        <a href="{{ url_for('admin_stats') }}" class="text-purple-600 hover:text-purple-800 transition px-2 py-2 rounded hover:bg-purple-50">Administration</a>
+                        {% endif %}
                         <div class="px-2 py-1 text-gray-600 text-sm">{{ session.username }}</div>
                         <a href="{{ url_for('user_logout') }}" class="text-red-600 hover:text-red-800 transition px-2 py-2 rounded hover:bg-red-50">Déconnexion</a>
                     </div>
@@ -86,15 +87,6 @@
                     </div>
                     {% endif %}
 
-                    <!-- Admin -->
-                    {% if 'logged_in' in session %}
-                    <div class="border-t border-gray-200 pt-3 mt-3">
-                        <a href="{{ url_for('admin_stats') }}" class="text-purple-600 hover:text-purple-800 transition px-2 py-2 rounded hover:bg-purple-50">Admin</a>
-                        <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-800 transition px-2 py-2 rounded hover:bg-red-50">Déconnexion Admin</a>
-                    </div>
-                    {% else %}
-                    <a href="{{ url_for('login') }}" class="text-blue-600 hover:text-blue-800 transition px-2 py-2 rounded hover:bg-blue-50 border-t border-gray-200 pt-3 mt-3">Connexion Admin</a>
-                    {% endif %}
                 </div>
             </div>
         </nav>
@@ -110,9 +102,6 @@
         <div class="container mx-auto px-4 py-6">
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <p class="text-gray-400 mb-4 md:mb-0">&copy; 2025 Portfolio Photos. Tous droits réservés.</p>
-                <a href="{{ url_for('login') }}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm">
-                    Connexion Admin
-                </a>
             </div>
         </div>
     </footer>
