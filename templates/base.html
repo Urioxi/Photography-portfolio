@@ -10,7 +10,10 @@
 </head>
 <body class="h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100">
     <!-- Données de session pour JavaScript -->
-    <div id="session-data" data-user-logged-in="{% if 'user_logged_in' in session %}true{% else %}false{% endif %}" style="display: none;"></div>
+    <div id="session-data"
+         data-user-logged-in="{% if 'user_logged_in' in session %}true{% else %}false{% endif %}"
+         data-current-username="{% if 'user_logged_in' in session %}{{ session.username }}{% endif %}"
+         style="display: none;"></div>
 
     <!-- Header -->
     <header class="bg-white shadow-md sticky top-0 z-[100] w-full">
@@ -73,7 +76,7 @@
 
                 </div>
 
-                <!-- Menu mobile - Bouton hamburger -->
+                <!-- Menu mobile - Bouton 3 barres -->
                 <div class="md:hidden">
                     <button id="mobileMenuBtn" class="text-gray-700 hover:text-blue-600 focus:outline-none focus:text-blue-600 p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

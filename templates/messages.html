@@ -74,7 +74,7 @@
                             <div class="hidden" id="userRecipientField">
                                 <input type="text" value="Urioxi" disabled
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 cursor-not-allowed">
-                                <input type="hidden" name="to_user" value="Urioxi" required>
+                                <input type="hidden" id="to_user_normal" name="to_user" value="Urioxi">
                                 <p class="text-xs text-gray-500 mt-1">Vous ne pouvez envoyer des messages qu'à l'administrateur</p>
                             </div>
                         </div>
@@ -212,7 +212,26 @@
         document.getElementById('messageForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            // Validation supplémentaire pour s'assurer que to_user est défini
+            let toUserValue = '';
+            if (isAdmin) {
+                toUserValue = document.getElementById('to_user').value;
+            } else {
+                toUserValue = document.getElementById('to_user_normal').value;
+            }
+
+            if (!toUserValue.trim()) {
+                const resultDiv = document.getElementById('messageResult');
+                resultDiv.className = 'mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded';
+                resultDiv.textContent = 'Veuillez sélectionner un destinataire';
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
             const formData = new FormData(e.target);
+            // S'assurer que to_user est dans le FormData
+            formData.set('to_user', toUserValue);
+
             const resultDiv = document.getElementById('messageResult');
 
             try {
@@ -247,21 +266,21 @@ let isAdmin = false;
 // Charger la liste des utilisateurs et déterminer le statut admin
 async function loadUsers() {
     try {
-        // Vérifier si l'utilisateur actuel est admin (Urioxi)
-        const currentUser = document.querySelector('span.font-bold.text-lg')?.textContent;
-        isAdmin = (currentUser === 'Urioxi');
+        // Utiliser les données de session définies dans base.html
+        const sessionData = document.getElementById('session-data');
+        const currentUsername = sessionData?.dataset?.currentUsername || '';
 
-        if (isAdmin) {
-            // Pour l'admin, charger tous les utilisateurs disponibles
-            // Dans un vrai système, cela viendrait d'une API
-            availableUsers = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank'];
-        } else {
-            // Pour les utilisateurs normaux, pas besoin de liste
-            availableUsers = [];
-        }
+        console.log('Current username:', currentUsername); // Debug
+        isAdmin = (currentUsername === 'Urioxi');
+
+        // Charger la liste des utilisateurs depuis l'API
+        const response = await fetch('/api/users');
+        const data = await response.json();
+        availableUsers = data.users || [];
 
         // Adapter l'interface selon le statut
         setupRecipientInterface();
+        setupUserSearch();
     } catch (error) {
         console.error('Erreur lors du chargement des utilisateurs:', error);
     }
@@ -343,9 +362,7 @@ function setupUserSearch() {
 }
 
         // Charger les données au démarrage
-        loadPhotos();
         loadUsers();
-        setupUserSearch();
     </script>
 </body>
 </html>

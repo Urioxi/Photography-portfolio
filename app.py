@@ -251,14 +251,6 @@ def get_unique_visits_count():
         return len(stats['unique_visits'])
     return len(stats['unique_visits'])
 
-def login_required(f):
-    """Décorateur pour protéger les routes admin."""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('logged_in'):
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
 
 def urioxi_required(f):
     """Décorateur pour protéger les routes admin - accès limité exactement à 'Urioxi'."""
@@ -289,17 +281,6 @@ def perso():
     """Page personnelle."""
     return render_template('perso.html')
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    """Page de connexion admin."""
-    if request.method == 'POST':
-        password = request.form.get('password', '')
-        if password == ADMIN_PASSWORD:
-            session['logged_in'] = True
-            return redirect(url_for('admin_stats'))
-        else:
-            return render_template('login.html', error='Mot de passe incorrect')
-    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
@@ -400,7 +381,7 @@ def add_photo():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/delete-photo/<photo_id>', methods=['DELETE'])
-@login_required
+@urioxi_required
 def delete_photo(photo_id):
     """Supprime une photo de la galerie."""
     try:
@@ -412,7 +393,7 @@ def delete_photo(photo_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/update-photo/<photo_id>', methods=['PUT'])
-@login_required
+@urioxi_required
 def update_photo(photo_id):
     """Met à jour les catégories et/ou la description d'une photo."""
     try:
@@ -435,7 +416,7 @@ def update_photo(photo_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/create-category', methods=['POST'])
-@login_required
+@urioxi_required
 def create_category():
     """Crée une nouvelle catégorie (juste pour la liste, pas de modification de photos)."""
     try:
@@ -577,6 +558,24 @@ def get_unread_messages():
     unread_count = get_unread_count(username)
     return jsonify({'unread': unread_count})
 
+@app.route('/api/users')
+def get_users():
+    """API pour récupérer la liste des utilisateurs disponibles pour l'envoi de messages."""
+    if not session.get('user_logged_in'):
+        return jsonify({'users': []})
+
+    current_username = session['username']
+    users = load_users()
+
+    # Pour l'admin (Urioxi), retourner tous les utilisateurs sauf lui-même
+    if current_username == 'Urioxi':
+        available_users = [u for u in users.keys() if u != current_username]
+    else:
+        # Pour les utilisateurs normaux, seulement Urioxi
+        available_users = ['Urioxi'] if 'Urioxi' in users else []
+
+    return jsonify({'users': available_users})
+
 @app.route('/rebuild-gallery', methods=['POST'])
 def rebuild_gallery():
     """Reconstruit la galerie depuis toutes les images dans le dossier portfolio/ sur Cloudinary."""
@@ -611,3 +610,5 @@ def rebuild_gallery():
         return jsonify({'error': str(e)}), 500
 
 # Pour PythonAnywhere, pas de app.run() - le serveur WSGI gère cela
+if __name__ == '__main__':
+    app.run(debug=True)
