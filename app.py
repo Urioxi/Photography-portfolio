@@ -202,6 +202,12 @@ def get_user_messages(username):
     """Récupère les messages d'un utilisateur."""
     messages = load_messages()
     user_messages = [msg for msg in messages if msg['to'] == username]
+
+    # S'assurer que tous les messages ont la propriété 'read'
+    for msg in user_messages:
+        if 'read' not in msg:
+            msg['read'] = False
+
     return user_messages
 
 def get_unread_count(username):
@@ -538,7 +544,10 @@ def messages():
     users = load_users()
     other_users = [u for u in users.keys() if u != username]
 
-    return render_template('messages.html', messages=user_messages, users=other_users)
+    # Charger la galerie pour l'affichage des photos dans les messages
+    gallery = load_gallery()
+
+    return render_template('messages.html', messages=user_messages, users=other_users, gallery=gallery)
 
 @app.route('/send-message', methods=['POST'])
 def send_message_route():

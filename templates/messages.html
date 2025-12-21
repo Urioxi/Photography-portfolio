@@ -5,7 +5,8 @@
 
 {% block content %}
 <!-- Données des messages pour JavaScript -->
-<div id="messages-data" data-messages="{{ messages | tojson }}" style="display: none;"></div>
+<div id="messages-data" data-messages='{{ messages | tojson }}' style="display: none;"></div>
+<div id="gallery-data" data-gallery='{{ gallery | tojson }}' style="display: none;"></div>
     <div class="container mx-auto px-4 py-8">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-6">
@@ -13,16 +14,16 @@
                 <a href="{{ url_for('index') }}" class="text-blue-600 hover:text-blue-800">← Retour à l'accueil</a>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Liste des messages -->
-                <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
                     <h2 class="text-xl font-semibold mb-4">Mes messages</h2>
 
                     {% if messages %}
                     <div class="space-y-4">
                         {% for message in messages %}
                         <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer message-item"
-                             onclick="openMessage({{ loop.index0 }}, {{ message | tojson if message else '{}' }})"
+                             onclick="openMessage({{ loop.index0 }})"
                             <div class="flex justify-between items-start mb-2">
                                 <div>
                                     <span class="font-medium text-gray-800">De: {{ message.from }}</span>
@@ -38,7 +39,7 @@
                             <p class="text-gray-600 mb-3">{{ message.content[:100] }}{% if message.content|length > 100 %}...{% endif %}</p>
                             {% if message.photo_ids and message.photo_ids|length > 0 %}
                             <div class="mt-2">
-                                <span class="text-sm text-blue-600">📎 {{ message.photo_ids|length }} photo(s) attachée(s)</span>
+                                <span class="text-sm text-blue-600">{{ message.photo_ids|length }} photo(s) attachée(s)</span>
                             </div>
                             {% endif %}
                             <div class="text-right mt-2">
@@ -405,9 +406,11 @@ document.getElementById('messageForm').addEventListener('submit', async (e) => {
 let allMessages = [];
 
 // Fonction pour ouvrir un message
-function openMessage(index, messageData) {
-    // Les données sont déjà passées depuis Jinja2, pas besoin de les reparser
-    const message = typeof messageData === 'string' ? JSON.parse(messageData) : messageData;
+function openMessage(index) {
+    // Récupérer les données des messages depuis le DOM
+    const messagesData = document.getElementById('messages-data');
+    const messages = JSON.parse(messagesData.dataset.messages);
+    const message = messages[index];
 
     // Marquer le message comme lu si nécessaire
     if (!message.read) {
@@ -430,14 +433,31 @@ function openMessage(index, messageData) {
     if (message.photo_ids && message.photo_ids.length > 0) {
         const photoContainer = document.getElementById('modalPhoto');
         const photoImg = document.getElementById('modalPhotoImg');
+        const galleryData = document.getElementById('gallery-data');
+        const gallery = JSON.parse(galleryData.dataset.gallery);
 
-        // Pour l'instant, on affiche seulement la première photo
-        // TODO: Implémenter un carousel pour plusieurs photos
-        photoContainer.classList.remove('hidden');
-        // Simuler l'URL de la photo (à remplacer par la vraie logique)
-        // photoImg.src = `/api/photos/${message.photo_ids[0]}`;
-        photoImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjOTk5Ij5QaG90byBQbGFjZWhvbGRlcjwvdGV4dD48L3N2Zz4=';
-        photoImg.alt = `Photo: ${message.photo_ids[0]}`;
+        // Trouver la première photo dans la galerie
+        const firstPhotoId = message.photo_ids[0];
+        const photo = gallery.find(p => p.id === firstPhotoId);
+
+        if (photo && photo.url) {
+            photoContainer.classList.remove('hidden');
+            photoImg.src = photo.url;
+            photoImg.alt = photo.title || `Photo ${firstPhotoId}`;
+
+            // Si plusieurs photos, afficher un indicateur
+            if (message.photo_ids.length > 1) {
+                const indicator = document.createElement('div');
+                indicator.className = 'mt-2 text-sm text-gray-500';
+                indicator.textContent = `+ ${message.photo_ids.length - 1} autre(s) photo(s)`;
+                photoContainer.appendChild(indicator);
+            }
+        } else {
+            // Photo non trouvée, afficher un placeholder
+            photoContainer.classList.remove('hidden');
+            photoImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjOTk5Ij5QaG90byBub24gdHJvdXZlPC90ZXh0Pjwvc3ZnPg==';
+            photoImg.alt = 'Photo non trouvée';
+        }
     } else {
         document.getElementById('modalPhoto').classList.add('hidden');
     }
