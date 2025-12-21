@@ -256,8 +256,8 @@ def urioxi_required(f):
     """Décorateur pour protéger les routes admin - accès limité exactement à 'Urioxi'."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not session.get('logged_in'):
-            return redirect(url_for('login'))
+        if not session.get('user_logged_in'):
+            return redirect(url_for('user_login'))
         if session.get('username') != 'Urioxi':
             # Retourner une erreur 404 - la page n'existe pas pour les non-admin
             from flask import abort

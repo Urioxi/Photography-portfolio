@@ -1,13 +1,8 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Messagerie - Portfolio Photos</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" href="data:,">
-</head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+{% extends "base.html" %}
+
+{% block title %}Messagerie - Portfolio Photos{% endblock %}
+
+{% block content %}
     <div class="container mx-auto px-4 py-8">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-6">
@@ -364,5 +359,4 @@ function setupUserSearch() {
         // Charger les données au démarrage
         loadUsers();
     </script>
-</body>
-</html>
+{% endblock %}
