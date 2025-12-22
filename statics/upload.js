@@ -8,17 +8,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Gestion du clic sur le bouton d'upload
     uploadBtn.addEventListener('click', () => {
+        console.log("Bouton upload cliqué");
         photoInput.click();
     });
 
     // Gestion de la sélection de fichier
     photoInput.addEventListener('change', (e) => {
+        console.log("Fichier sélectionné:", e.target.files[0]);
         if (e.target.files.length) {
             handleFileUpload(e.target.files[0]);
         }
     });
 
     function handleFileUpload(file) {
+        console.log("Traitement du fichier:", file.name);
         
         // Vérifier si c'est une image
         if (!file.type.startsWith('image/')) {
@@ -61,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function uploadToServer(file) {
+        console.log("Upload vers le serveur...");
         const formData = new FormData();
         formData.append('photo', file);
 
@@ -71,9 +75,11 @@ document.addEventListener('DOMContentLoaded', function() {
             body: formData
         })
         .then(response => {
+            console.log("Réponse reçue, status:", response.status);
             return response.json();
         })
         .then(data => {
+            console.log("Données reçues:", data);
             if (data.success) {
                 showMessage('✓ Photo ajoutée avec succès !', 'success');
                 addPhotoToGallery(data.photo);
@@ -89,6 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
+            console.error('Erreur fetch:', error);
             showMessage('✗ Erreur de connexion au serveur', 'error');
             previewContainer.innerHTML = '';
         });
@@ -106,6 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Formater la date
         const date = new Date(photo.created_at).toLocaleDateString('fr-FR');
+        
         photoCard.innerHTML = `
             <img src="${photo.url}" alt="Nouvelle photo" loading="lazy">
             <div class="photo-info">

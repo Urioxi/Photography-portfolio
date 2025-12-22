@@ -27,11 +27,6 @@ app = Flask(__name__, static_folder='statics', template_folder='templates')
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 CORS(app)
 
-# Variables globales pour les templates
-@app.context_processor
-def inject_globals():
-    return {'ADMINS': ADMINS}
-
 # Mot de passe admin (défini dans .env, valeur par défaut pour dev)
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 # Config Cloudinary

@@ -342,18 +342,22 @@
 document.getElementById('messageForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    console.log('Tentative d\'envoi de message');
+
     // Validation supplémentaire pour s'assurer que to_user est défini
     let toUserValue = '';
     if (isAdmin) {
         toUserValue = document.getElementById('to_user').value;
+        console.log('Admin - to_user:', toUserValue);
     } else {
         const selectElement = document.getElementById('userRecipientSelect');
-        toUserValue = selectElement && !selectElement.disabled ? selectElement.value : '';
+        toUserValue = selectElement ? selectElement.value : '';
+        console.log('User normal - to_user:', toUserValue, 'select element:', selectElement);
     }
 
-    const resultDiv = document.getElementById('messageResult');
-
     if (!toUserValue.trim()) {
+        console.log('Validation échouée: pas de destinataire');
+        const resultDiv = document.getElementById('messageResult');
         resultDiv.className = 'mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded';
         resultDiv.textContent = 'Veuillez sélectionner un destinataire';
         resultDiv.classList.remove('hidden');
@@ -364,6 +368,10 @@ document.getElementById('messageForm').addEventListener('submit', async (e) => {
     // S'assurer que to_user est dans le FormData
     formData.set('to_user', toUserValue);
 
+    console.log('Envoi du message à:', toUserValue);
+
+    const resultDiv = document.getElementById('messageResult');
+
     try {
         const response = await fetch('/send-message', {
             method: 'POST',
@@ -371,6 +379,7 @@ document.getElementById('messageForm').addEventListener('submit', async (e) => {
         });
 
         const data = await response.json();
+        console.log('Réponse du serveur:', data);
 
         resultDiv.className = data.success ? 'mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded' : 'mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded';
         resultDiv.textContent = data.message;
@@ -386,11 +395,15 @@ document.getElementById('messageForm').addEventListener('submit', async (e) => {
             }, 2000);
         }
     } catch (error) {
+        console.error('Erreur lors de l\'envoi:', error);
         resultDiv.className = 'mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded';
         resultDiv.textContent = 'Erreur lors de l\'envoi';
         resultDiv.classList.remove('hidden');
     }
 });
+
+// Variables pour stocker les messages
+let allMessages = [];
 
 // Fonction pour ouvrir un message
 function openMessage(index) {
@@ -476,11 +489,13 @@ async function markMessageAsRead(messageId) {
             body: JSON.stringify({ message_id: messageId })
         });
     } catch (error) {
+        console.error('Erreur lors du marquage du message comme lu:', error);
     }
 }
 
 // Liste des utilisateurs disponibles
 let availableUsers = [];
+let isAdmin = false;
 
 // Charger la liste des utilisateurs et déterminer le statut admin
 async function loadUsers() {
@@ -488,8 +503,11 @@ async function loadUsers() {
         // Utiliser les données de session définies dans base.html
         const sessionData = document.getElementById('session-data');
         const currentUsername = sessionData?.dataset?.currentUsername || '';
+
+        console.log('Current username:', currentUsername); // Debug
         // Liste des administrateurs
-        const isAdmin = {{ ADMINS | tojson }}.includes(currentUsername);
+        const admins = ['Urioxi', 'noemie.mrn21'];
+        isAdmin = admins.includes(currentUsername);
 
         // Charger la liste des utilisateurs depuis l'API
         const response = await fetch('/api/users');
@@ -506,26 +524,24 @@ async function loadUsers() {
 
 // Configurer l'interface des destinataires selon le statut utilisateur
 function setupRecipientInterface() {
+    console.log('Configuration interface - isAdmin:', isAdmin, 'availableUsers:', availableUsers);
     const adminField = document.getElementById('adminRecipientField');
     const userField = document.getElementById('userRecipientField');
-    const hiddenInput = document.getElementById('to_user');
-    const userSelect = document.getElementById('userRecipientSelect');
 
     if (isAdmin) {
+        console.log('Affichage interface admin');
         adminField.classList.remove('hidden');
         userField.classList.add('hidden');
-        // Désactiver le select pour éviter les conflits
-        if (userSelect) userSelect.disabled = true;
-        if (hiddenInput) hiddenInput.disabled = false;
     } else {
+        console.log('Affichage interface utilisateur normal');
         adminField.classList.add('hidden');
         userField.classList.remove('hidden');
-        // Désactiver l'input hidden pour éviter les conflits
-        if (hiddenInput) hiddenInput.disabled = true;
-        if (userSelect) userSelect.disabled = false;
 
         // Pour les utilisateurs normaux, créer une liste déroulante avec les admins disponibles
+        const userSelect = document.getElementById('userRecipientSelect');
+        console.log('userSelect element:', userSelect);
         if (userSelect && availableUsers.length > 0) {
+            console.log('Remplissage de la liste déroulante avec:', availableUsers);
             userSelect.innerHTML = '<option value="">Choisir un destinataire...</option>';
             availableUsers.forEach(user => {
                 const option = document.createElement('option');
@@ -533,6 +549,8 @@ function setupRecipientInterface() {
                 option.textContent = user;
                 userSelect.appendChild(option);
             });
+        } else {
+            console.log('Pas de userSelect ou pas d\'utilisateurs disponibles');
         }
     }
 }

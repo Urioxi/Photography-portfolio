@@ -264,6 +264,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             } catch (error) {
+                console.error('Erreur lors de la mise à jour des badges:', error);
+            }
         }
 
         // Mettre à jour les badges au chargement de la page
@@ -299,7 +301,7 @@ async function createCategory() {
             input.value = '';
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            status.textContent = 'Erreur: ' + result.error;
+            status.textContent = '❌ Erreur: ' + result.error;
             status.className = 'text-sm text-red-600 mt-2';
         }
     } catch (error) {
@@ -482,6 +484,7 @@ async function uploadImage() {
     } catch (error) {
         status.textContent = '❌ Erreur: ' + error.message;
         status.className = 'text-sm text-red-600 mt-2';
+        console.error('Erreur upload:', error);
     } finally {
         btn.disabled = false;
     }
