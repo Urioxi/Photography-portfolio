@@ -24,21 +24,29 @@
                     <div class="space-y-4">
                         {% for message in messages %}
                         <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer message-item"
-                             onclick="openMessage({{ loop.index0 }})"
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <span class="font-medium text-gray-800">De: {{ message.from }}</span>
-                                    <span class="text-gray-500 text-sm ml-4">
-                                        {{ message.timestamp[:10] }} à {{ message.timestamp[11:16] }}
-                                    </span>
+                             data-message-index="{{ loop.index0 }}">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-sm text-gray-600">De:</span>
+                                        <span class="font-medium text-gray-800">{{ message.from }}</span>
+                                        <span class="text-gray-400 text-sm">
+                                            {{ message.timestamp[:10] }} à {{ message.timestamp[11:16] }}
+                                        </span>
+                                    </div>
+                                    <h3 class="font-semibold text-lg text-gray-900 leading-tight">{{ message.subject }}</h3>
                                 </div>
                                 {% if not message.read %}
-                                <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full">Nouveau</span>
+                                <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full whitespace-nowrap">Nouveau</span>
                                 {% endif %}
-                                <h3 class="font-medium text-gray-800 mb-2">{{ message.subject }}</h3>
-                                <div class="text-right mt-2">
-                                    <span class="text-blue-600 text-sm hover:text-blue-800">Cliquer pour ouvrir →</span>
-                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-blue-600 text-sm hover:text-blue-800 inline-flex items-center">
+                                    Ouvrir le message
+                                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </span>
                             </div>
                         </div>
                         {% endfor %}

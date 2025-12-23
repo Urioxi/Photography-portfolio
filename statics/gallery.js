@@ -1,9 +1,11 @@
 // Gallery-specific JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    let allPhotos = [];
-    let currentPhoto = null;
 
-    function openModal(photo) {
+// Variables globales
+let allPhotos = [];
+let currentPhoto = null;
+
+// Fonctions globales
+function openModal(photo) {
     currentPhoto = photo;
     const modal = document.getElementById('photoModal');
     const modalImage = document.getElementById('modalImage');
@@ -117,9 +119,11 @@ async function loadGallery(category = '') {
         const response = await fetch(url);
         const gallery = await response.json();
 
+        console.log('Galerie chargée:', gallery);
         allPhotos = gallery;
         displayGallery(gallery);
     } catch (error) {
+        console.error('Erreur chargement galerie:', error);
         galleryDiv.innerHTML = '<div class="col-span-full text-center text-red-600 py-8">Impossible de charger la galerie.</div>';
     }
 }

@@ -501,4 +501,13 @@ document.getElementById('replyForm').addEventListener('submit', async (e) => {
         resultDiv.classList.remove('hidden');
     }
     });
+
+    // Event listeners pour les messages
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.message-item')) {
+            const messageItem = e.target.closest('.message-item');
+            const index = parseInt(messageItem.dataset.messageIndex);
+            openMessage(index);
+        }
+    });
 });
