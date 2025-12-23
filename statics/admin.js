@@ -1,5 +1,30 @@
 // Admin-specific JavaScript
+async function loadCategories() {
+    try {
+        const response = await fetch('/categories');
+        const categories = await response.json();
+        const select = document.getElementById('categoryInput');
+
+        // Garder seulement l'option "Non catégorisé"
+        select.innerHTML = '<option value="Non catégorisé">Non catégorisé</option>';
+
+        categories.forEach(category => {
+            if (category !== 'Non catégorisé') {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                select.appendChild(option);
+            }
+        });
+    } catch (error) {
+        console.error('Erreur chargement catégories:', error);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Charger les catégories au démarrage
+    loadCategories();
+
     async function createCategory() {
     const input = document.getElementById('newCategoryInput');
     const status = document.getElementById('categoryStatus');
@@ -23,6 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
             status.textContent = '✅ Catégorie créée ! Vous pouvez maintenant l\'utiliser.';
             status.className = 'text-sm text-green-600 mt-2';
             input.value = '';
+            // Recharger les catégories dans le dropdown
+            loadCategories();
             setTimeout(() => window.location.reload(), 1000);
         } else {
             status.textContent = '❌ Erreur: ' + result.error;

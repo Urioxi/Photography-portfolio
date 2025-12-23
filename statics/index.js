@@ -1,9 +1,23 @@
 // Index page-specific JavaScript
+
+// Variables globales pour le slider
+let sliderPhotos = [];
+let currentSlideIndex = 0;
+let sliderInterval = null;
+
+// Fonctions globales pour les boutons du slider
+function nextSlide() {
+    currentSlideIndex = (currentSlideIndex + 1) % sliderPhotos.length;
+    goToSlide(currentSlideIndex);
+}
+
+function prevSlide() {
+    currentSlideIndex = (currentSlideIndex - 1 + sliderPhotos.length) % sliderPhotos.length;
+    goToSlide(currentSlideIndex);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     let currentPhoto = null;
-    let sliderPhotos = [];
-    let currentSlideIndex = 0;
-    let sliderInterval = null;
 
     function initSlider() {
     const sliderImages = document.getElementById('sliderImages');

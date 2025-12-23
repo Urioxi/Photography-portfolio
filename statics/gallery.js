@@ -92,6 +92,11 @@ async function loadCategories() {
         const categories = await response.json();
         const select = document.getElementById('categoryFilter');
 
+        // Vider les options existantes sauf la première
+        while (select.children.length > 1) {
+            select.removeChild(select.lastChild);
+        }
+
         categories.forEach(category => {
             const option = document.createElement('option');
             option.value = category;
@@ -157,27 +162,26 @@ function displayGallery(gallery) {
         div.appendChild(img);
         galleryDiv.appendChild(div);
     });
-}
 
-// Event listener pour le filtre de catégorie
-document.getElementById('categoryFilter').addEventListener('change', (e) => {
-    loadGallery(e.target.value);
-});
+    // Event listener pour le filtre de catégorie
+    document.getElementById('categoryFilter').addEventListener('change', (e) => {
+        loadGallery(e.target.value);
+    });
 
-// Event listener pour la recherche
-document.getElementById('searchInput').addEventListener('input', (e) => {
-    displayGallery(allPhotos);
-});
+    // Event listener pour la recherche
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        displayGallery(allPhotos);
+    });
 
-// Fermer le modal en cliquant en dehors
-document.addEventListener('click', (e) => {
-    const modal = document.getElementById('photoModal');
-    if (e.target === modal) {
-        closeModal();
-    }
-});
+    // Fermer le modal en cliquant en dehors
+    document.addEventListener('click', (e) => {
+        const modal = document.getElementById('photoModal');
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
 
-// Chargement initial
+    // Chargement initial
     loadCategories();
     loadGallery();
 });
