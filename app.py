@@ -33,11 +33,9 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
     api_key=os.getenv('CLOUDINARY_API_KEY'),
-    api_secret=os.getenv('CLOUDINARY_API_SECRET'),
-    
+    api_secret=os.getenv('CLOUDINARY_API_SECRET')
 )
-
-# Fichier JSON local (sur PythonAnywhere, on stocke localement car les connexions HTTPS sortantes sont bloquées)
+# Définir le répertoire de données en fonction de l'environnement
 GALLERY_FILE = 'data.json'
 STATS_FILE = 'stats.json'
 USERS_FILE = 'users.json'
@@ -322,7 +320,7 @@ def admin_stats():
     for category in categories:
         stats['photos_by_category'][category] = len([
             p for p in gallery 
-            if category in (p.get('categories') or [p.get('category')] if p.get('category') else [])
+            if category in p.get('categories', [])
         ])
     
     return render_template('admin_stats.html', stats=stats, categories=categories, gallery=gallery)
@@ -635,7 +633,10 @@ def rebuild_gallery():
                 'id': str(uuid.uuid4()),
                 'public_id': resource['public_id'],
                 'url': cloudinary.CloudinaryImage(resource['public_id']).build_url(secure=True),
-                'uploaded_at': resource.get('created_at', '')
+                'uploaded_at': resource.get('created_at', ''),
+                'categories': ['Non catégorisé'], # Default category
+                'description': '',
+                'title': ''
             }
             gallery.append(photo)
         

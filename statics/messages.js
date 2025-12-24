@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             resultDiv.className = 'mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded';
-            resultDiv.textContent = 'Erreur lors de l'envoi';
+            resultDiv.textContent = 'Erreur lors de l\'envoi';
             resultDiv.classList.remove('hidden');
         }
     });
@@ -416,4 +416,14 @@ document.addEventListener('DOMContentLoaded', function() {
             openMessage(index);
         });
     });
+
+    // Fermer le modal en cliquant en dehors
+    const messageModal = document.getElementById('messageModal');
+    if (messageModal) {
+        messageModal.addEventListener('click', (e) => {
+            if (e.target === messageModal) {
+                closeMessageModal();
+            }
+        });
+    }
 });

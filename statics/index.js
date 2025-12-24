@@ -16,8 +16,10 @@ function prevSlide() {
     goToSlide(currentSlideIndex);
 }
 
+
+let currentPhoto = null; // Variable globale pour la photo actuellement ouverte dans le modal
+
 document.addEventListener('DOMContentLoaded', function() {
-    let currentPhoto = null;
 
     function initSlider() {
     const sliderImages = document.getElementById('sliderImages');
@@ -65,23 +67,9 @@ function goToSlide(index) {
         ind.className = `w-3 h-3 rounded-full transition ${i === index ? 'bg-blue-600' : 'bg-gray-300'}`;
     });
 
-    // Réinitialiser l'auto-play
-    if (sliderInterval) clearInterval(sliderInterval);
-    sliderInterval = setInterval(nextSlide, 5000);
-}
-
-function nextSlide() {
-    currentSlideIndex = (currentSlideIndex + 1) % sliderPhotos.length;
-    goToSlide(currentSlideIndex);
-}
-
-function prevSlide() {
-    currentSlideIndex = (currentSlideIndex - 1 + sliderPhotos.length) % sliderPhotos.length;
-    goToSlide(currentSlideIndex);
 }
 
 function openModal(photo) {
-    currentPhoto = photo;
     const modal = document.getElementById('photoModal');
     const modalImage = document.getElementById('modalImage');
     const modalTitle = document.getElementById('modalTitle');
@@ -95,10 +83,16 @@ function openModal(photo) {
     document.body.style.overflow = 'hidden';
 }
 
+function closeModal() {
+    const modal = document.getElementById('photoModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = 'auto';
+}
+
 function openFullscreen() {
     if (!currentPhoto) return;
 
-    // Créer un élément pour le plein écran
     const fullscreenDiv = document.createElement('div');
     fullscreenDiv.id = 'fullscreenContainer';
     fullscreenDiv.className = 'fixed inset-0 bg-black z-[9999] flex items-center justify-center';
@@ -118,7 +112,6 @@ function openFullscreen() {
     fullscreenDiv.appendChild(closeBtn);
     document.body.appendChild(fullscreenDiv);
 
-    // Activer le plein écran natif
     if (fullscreenDiv.requestFullscreen) {
         fullscreenDiv.requestFullscreen();
     } else if (fullscreenDiv.webkitRequestFullscreen) {
@@ -127,7 +120,6 @@ function openFullscreen() {
         fullscreenDiv.msRequestFullscreen();
     }
 
-    // Fermer avec Échap
     document.addEventListener('keydown', handleFullscreenKey);
 }
 
@@ -138,7 +130,6 @@ function handleFullscreenKey(e) {
 }
 
 function closeFullscreen() {
-    // Sortir du plein écran natif
     if (document.exitFullscreen) {
         document.exitFullscreen();
     } else if (document.webkitExitFullscreen) {
@@ -147,7 +138,6 @@ function closeFullscreen() {
         document.msExitFullscreen();
     }
 
-    // Supprimer l'élément
     const container = document.getElementById('fullscreenContainer');
     if (container) {
         container.remove();
@@ -156,12 +146,6 @@ function closeFullscreen() {
     document.removeEventListener('keydown', handleFullscreenKey);
 }
 
-function closeModal() {
-    const modal = document.getElementById('photoModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    document.body.style.overflow = 'auto';
-}
 
 async function loadGallery() {
     const galleryDiv = document.getElementById('gallery');
@@ -200,14 +184,15 @@ async function loadGallery() {
     }
 }
 
-// Fermer le modal en cliquant en dehors
-document.addEventListener('click', (e) => {
-    const modal = document.getElementById('photoModal');
-    if (e.target === modal) {
-        closeModal();
-    }
-});
+document.addEventListener('DOMContentLoaded', function() {
+    // Fermer le modal en cliquant en dehors
+    document.addEventListener('click', (e) => {
+        const modal = document.getElementById('photoModal');
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
 
-// Chargement initial
+    // Chargement initial
     loadGallery();
 });

@@ -166,7 +166,15 @@ function displayGallery(gallery) {
         div.appendChild(img);
         galleryDiv.appendChild(div);
     });
+}
 
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.openFullscreen = openFullscreen;
+window.closeFullscreen = closeFullscreen;
+window.handleFullscreenKey = handleFullscreenKey;
+
+document.addEventListener('DOMContentLoaded', function() {
     // Event listener pour le filtre de catégorie
     document.getElementById('categoryFilter').addEventListener('change', (e) => {
         loadGallery(e.target.value);
@@ -189,3 +197,4 @@ function displayGallery(gallery) {
     loadCategories();
     loadGallery();
 });
+

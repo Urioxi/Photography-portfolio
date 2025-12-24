@@ -116,3 +116,4 @@ document.addEventListener('DOMContentLoaded', function() {
         setInterval(updateUnreadBadge, 30000);
     }
 });
+
