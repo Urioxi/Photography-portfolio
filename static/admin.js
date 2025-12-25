@@ -21,11 +21,8 @@ async function loadCategories() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Charger les catégories au démarrage
-    loadCategories();
-
-    async function createCategory() {
+// Rendre les fonctions globales
+window.createCategory = async function() {
     const input = document.getElementById('newCategoryInput');
     const status = document.getElementById('categoryStatus');
     const name = input.value.trim();
@@ -61,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }
 
-async function updatePhoto(photoId) {
+window.updatePhoto = async function(photoId) {
     const titleInput = document.getElementById(`title-${photoId}`);
     const categoriesInput = document.getElementById(`categories-${photoId}`);
     const descriptionInput = document.getElementById(`description-${photoId}`);
@@ -91,7 +88,7 @@ async function updatePhoto(photoId) {
     }
 }
 
-async function deletePhoto(photoId) {
+window.deletePhoto = async function(photoId) {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette photo ?')) {
         return;
     }
@@ -114,7 +111,7 @@ async function deletePhoto(photoId) {
 }
 
 // Fonction de recherche dans la liste des photos
-function searchPhotos() {
+window.searchPhotos = function() {
     const searchInput = document.getElementById('searchPhotosInput');
     const searchTerm = searchInput.value.toLowerCase().trim();
     const photoItems = document.querySelectorAll('.photo-item');
@@ -156,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-async function uploadImage() {
+window.uploadImage = async function() {
     const fileInput = document.getElementById('imageInput');
     const categoryInput = document.getElementById('categoryInput');
     const status = document.getElementById('status');
