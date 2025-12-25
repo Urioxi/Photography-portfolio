@@ -23,7 +23,7 @@ ADMINS = ['Urioxi', 'noemie.mrn21']
 load_dotenv()
 
 
-app = Flask(__name__, static_folder='static', template_folder='templates')
+app = Flask(__name__, static_folder='statics', template_folder='templates')
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 CORS(app)
 

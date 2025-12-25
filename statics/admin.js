@@ -212,7 +212,9 @@ function searchPhotos() {
 
     photoItems.forEach(item => {
         const title = item.dataset.photoTitle || '';
-        const isVisible = title.includes(searchTerm);
+        // Si pas de terme de recherche, montrer tout
+        // Sinon, vérifier si le titre contient le terme (insensible à la casse)
+        const isVisible = !searchTerm || title.includes(searchTerm);
         item.style.display = isVisible ? 'block' : 'none';
     });
 }
