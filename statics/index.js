@@ -7,11 +7,13 @@ let sliderInterval = null;
 
 // Fonctions globales pour les boutons du slider
 function nextSlide() {
+    if (sliderPhotos.length === 0) return;
     currentSlideIndex = (currentSlideIndex + 1) % sliderPhotos.length;
     goToSlide(currentSlideIndex);
 }
 
 function prevSlide() {
+    if (sliderPhotos.length === 0) return;
     currentSlideIndex = (currentSlideIndex - 1 + sliderPhotos.length) % sliderPhotos.length;
     goToSlide(currentSlideIndex);
 }
@@ -25,23 +27,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const sliderImages = document.getElementById('sliderImages');
     const indicators = document.getElementById('sliderIndicators');
 
+    if (!sliderImages || !indicators) {
+        console.error('Éléments du slider non trouvés');
+        return;
+    }
+
     sliderImages.innerHTML = '';
     indicators.innerHTML = '';
 
     if (sliderPhotos.length === 0) {
-        sliderImages.innerHTML = '<div class="w-full flex items-center justify-center text-gray-500">Aucune photo disponible</div>';
+        sliderImages.innerHTML = '<div class="w-full flex items-center justify-center text-gray-500 bg-gray-200">Aucune photo disponible</div>';
         return;
     }
 
     // Créer les images du slider
     sliderPhotos.forEach((photo, index) => {
         const slide = document.createElement('div');
-        slide.className = 'min-w-full h-full flex-shrink-0';
+        slide.className = 'min-w-full h-full flex-shrink-0 cursor-pointer';
         slide.style.backgroundImage = `url(${photo.url})`;
         slide.style.backgroundSize = 'cover';
         slide.style.backgroundPosition = 'center';
         slide.onclick = () => openModal(photo);
-        slide.className += ' cursor-pointer';
         sliderImages.appendChild(slide);
 
         // Créer les indicateurs
@@ -51,22 +57,44 @@ document.addEventListener('DOMContentLoaded', function() {
         indicators.appendChild(indicator);
     });
 
-    // Auto-play toutes les 5 secondes
+    // Initialiser à la première slide
+    currentSlideIndex = 0;
+    goToSlide(0);
+
+    // Masquer les boutons et indicateurs s'il n'y a qu'une seule photo
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    if (sliderPhotos.length <= 1) {
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        if (indicators) indicators.style.display = 'none';
+    } else {
+        if (prevBtn) prevBtn.style.display = 'block';
+        if (nextBtn) nextBtn.style.display = 'block';
+        if (indicators) indicators.style.display = 'flex';
+    }
+
+    // Auto-play toutes les 5 secondes (seulement si plus d'une photo)
     if (sliderInterval) clearInterval(sliderInterval);
-    sliderInterval = setInterval(nextSlide, 5000);
+    if (sliderPhotos.length > 1) {
+        sliderInterval = setInterval(nextSlide, 5000);
+    }
 }
 
 function goToSlide(index) {
-    currentSlideIndex = index;
+    if (sliderPhotos.length === 0) return;
+    
+    currentSlideIndex = index % sliderPhotos.length;
     const sliderImages = document.getElementById('sliderImages');
-    sliderImages.style.transform = `translateX(-${index * 100}%)`;
+    if (!sliderImages) return;
+    
+    sliderImages.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
 
     // Mettre à jour les indicateurs
     const indicators = document.querySelectorAll('#sliderIndicators button');
     indicators.forEach((ind, i) => {
-        ind.className = `w-3 h-3 rounded-full transition ${i === index ? 'bg-blue-600' : 'bg-gray-300'}`;
+        ind.className = `w-3 h-3 rounded-full transition ${i === currentSlideIndex ? 'bg-blue-600' : 'bg-gray-300'}`;
     });
-
 }
 
 function openModal(photo) {
@@ -74,6 +102,9 @@ function openModal(photo) {
     const modalImage = document.getElementById('modalImage');
     const modalTitle = document.getElementById('modalTitle');
     const modalText = document.getElementById('modalText');
+
+    // Définir currentPhoto pour openFullscreen
+    currentPhoto = photo;
 
     modalImage.src = photo.url;
     modalTitle.textContent = photo.title || 'Sans titre';
@@ -149,14 +180,25 @@ function closeFullscreen() {
 
 async function loadGallery() {
     const galleryDiv = document.getElementById('gallery');
+    if (!galleryDiv) {
+        console.error('Élément gallery non trouvé');
+        return;
+    }
+
     galleryDiv.innerHTML = '<div class="col-span-full text-center text-gray-500">Chargement...</div>';
 
     try {
         const response = await fetch('/gallery');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const gallery = await response.json();
+
+        console.log('Galerie chargée:', gallery.length, 'photos');
 
         // Charger les 6 dernières photos pour le slider
         sliderPhotos = gallery.slice(-6).reverse(); // Les plus récentes en premier
+        console.log('Photos pour le slider:', sliderPhotos.length);
         initSlider();
 
         galleryDiv.innerHTML = '';
@@ -165,7 +207,14 @@ async function loadGallery() {
             return;
         }
 
-        gallery.slice(0, 4).forEach(photo => {
+        // Afficher les 4 premières photos
+        const photosToShow = gallery.slice(0, 4);
+        photosToShow.forEach(photo => {
+            if (!photo.url) {
+                console.warn('Photo sans URL:', photo);
+                return;
+            }
+
             const div = document.createElement('div');
             div.className = 'relative group overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer';
             div.onclick = () => openModal(photo);
@@ -173,14 +222,19 @@ async function loadGallery() {
             const img = document.createElement('img');
             img.src = photo.url;
             img.className = 'w-full h-64 object-cover';
-            img.alt = 'Photo portfolio';
+            img.alt = photo.title || 'Photo portfolio';
             img.loading = 'lazy';
+            img.onerror = function() {
+                console.error('Erreur de chargement de l\'image:', photo.url);
+                this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjOTk5Ij5FcnJldXIgZGUgY2hhcmdlbWVudDwvdGV4dD48L3N2Zz4=';
+            };
 
             div.appendChild(img);
             galleryDiv.appendChild(div);
         });
     } catch (error) {
-        galleryDiv.innerHTML = '<div class="col-span-full text-center text-red-600 py-8">Impossible de charger la galerie.</div>';
+        console.error('Erreur lors du chargement de la galerie:', error);
+        galleryDiv.innerHTML = '<div class="col-span-full text-center text-red-600 py-8">Impossible de charger la galerie: ' + error.message + '</div>';
     }
 }
 
