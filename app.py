@@ -226,7 +226,8 @@ def get_unread_count(username):
 def send_message(from_user, to_user, subject, content, photo_ids=None):
     """Envoie un message."""
     users = load_users()
-    if to_user not in users:
+    # Vérifier si le destinataire existe (utilisateur enregistré ou admin)
+    if to_user not in users and to_user not in ADMINS:
         return False, "Destinataire non trouvé"
 
     # Convertir photo_ids en liste si c'est une string

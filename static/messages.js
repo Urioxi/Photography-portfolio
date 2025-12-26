@@ -80,6 +80,7 @@ function openMessage(messageId) {
     const message = messages.find(msg => msg.id === messageId);
     if (!message) {
         console.error('Message not found with ID:', messageId);
+        console.log('Available message IDs:', messages.map(m => m.id));
         return;
     }
 
